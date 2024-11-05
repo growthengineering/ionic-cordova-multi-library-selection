@@ -43,8 +43,14 @@
      <!-- ios -->
      <platform name="ios">
    
-        <header-file src="src/ios/CustomImagePickerActivity.h" />
-        <source-file src="src/ios/CustomImagePickerActivity.m" />
+        <config-file target="config.xml" parent="/*">
+            <feature name="CustomLibraryLauncher">
+                <param name="ios-package" value="CustomLibraryLauncher" />
+            </feature>
+        </config-file>
+         
+        <header-file src="src/ios/CustomLibraryLauncher.h" /> 
+        <source-file src="src/ios/CustomLibraryLauncher.m" />
         <header-file src="src/ios/CustomImagePicker.h" />
         <source-file src="src/ios/CustomImagePicker.m" />
         

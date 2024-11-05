@@ -1,67 +1,58 @@
-#import <UIKit/UIKit.h>
-#import <Photos/Photos.h>
-#import <Cordova/CDV.h>
-
-@protocol CustomImagePickerDelegate <NSObject>
-- (void)didSelectImages:(NSArray<UIImage *> *)images;
-- (void)didCancelImageSelection;
-@end
-
-@interface CustomImagePicker : UIViewController <UICollectionViewDelegate, UICollectionViewDataSource>
-
-@property (nonatomic, weak) id<CustomImagePickerDelegate> delegate;
-@property (nonatomic, strong) UICollectionView *collectionView;
-@property (nonatomic, strong) NSMutableArray<PHAsset *> *selectedAssets;
-@property (nonatomic, strong) NSMutableArray<PHAsset *> *allAssets;
-@property (nonatomic, strong) NSString *callbackId;
-
-@end
+#import "CustomImagePicker.h"
 
 @implementation CustomImagePicker
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    // Hide the navigation bar
+    self.navigationController.navigationBarHidden = YES;
+    
+    // Add this to ensure the view starts from the top
+    //if (@available(iOS 11.0, *)) {
+    //    self.additionalSafeAreaInsets = UIEdgeInsetsMake(0, 0, 0, 0);
+   // }
+    
     // Initialize selectedAssets
     self.selectedAssets = [NSMutableArray array];
     
-    // Create a header view
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 60)];
+    // Create a header view - adjust frame to account for status bar
+     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 60)];
     headerView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.7]; // Set background color with transparency
 
-    // Add title label to header
-    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, headerView.bounds.size.width, 60)];
-    titleLabel.text = @"";
-    titleLabel.textColor = [UIColor whiteColor];
-    titleLabel.textAlignment = NSTextAlignmentCenter;
-    [headerView addSubview:titleLabel];
-
-    // Add Cancel button
+    // Add Cancel button with user interaction enabled
     UIButton *cancelButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    cancelButton.userInteractionEnabled = YES;
     [cancelButton setTitle:@"Cancel" forState:UIControlStateNormal];
-    [cancelButton addTarget:self action:@selector(cancelImageSelection) forControlEvents:UIControlEventTouchUpInside];
-    cancelButton.translatesAutoresizingMaskIntoConstraints = NO; // Disable autoresizing mask translation
+    [cancelButton addTarget:self action:@selector(cancelImageSelection:) forControlEvents:UIControlEventTouchUpInside];
+    cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
     [headerView addSubview:cancelButton];
 
-    // Add Done button
+    // Add Done button with user interaction enabled
     UIButton *doneButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    doneButton.userInteractionEnabled = YES;
     [doneButton setTitle:@"Done" forState:UIControlStateNormal];
-    [doneButton addTarget:self action:@selector(returnSelectedImages) forControlEvents:UIControlEventTouchUpInside];
-    doneButton.translatesAutoresizingMaskIntoConstraints = NO; // Disable autoresizing mask translation
+    [doneButton addTarget:self action:@selector(returnSelectedImages:) forControlEvents:UIControlEventTouchUpInside];
+    doneButton.translatesAutoresizingMaskIntoConstraints = NO;
     [headerView addSubview:doneButton];
 
-    // Set button styles to match
+    // Set button styles
     [cancelButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     [doneButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    doneButton.backgroundColor = [UIColor clearColor]; // Match Cancel button style
+    cancelButton.backgroundColor = [UIColor clearColor];
+    doneButton.backgroundColor = [UIColor clearColor];
 
     // Set constraints for the buttons
     [NSLayoutConstraint activateConstraints:@[
         [cancelButton.leadingAnchor constraintEqualToAnchor:headerView.leadingAnchor constant:20],
         [cancelButton.centerYAnchor constraintEqualToAnchor:headerView.centerYAnchor],
+        [cancelButton.widthAnchor constraintEqualToConstant:70],
+        [cancelButton.heightAnchor constraintEqualToConstant:40],
         
         [doneButton.trailingAnchor constraintEqualToAnchor:headerView.trailingAnchor constant:-20],
-        [doneButton.centerYAnchor constraintEqualToAnchor:headerView.centerYAnchor]
+        [doneButton.centerYAnchor constraintEqualToAnchor:headerView.centerYAnchor],
+        [doneButton.widthAnchor constraintEqualToConstant:70],
+        [doneButton.heightAnchor constraintEqualToConstant:40]
     ]];
 
     // Add the header view to the main view
@@ -88,6 +79,7 @@
     // Load images
     [self loadImages];
 }
+ 
 
 - (void)loadImages {
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
@@ -148,50 +140,40 @@
     return cell;
 }
 
-- (void)returnSelectedImages {
+- (void)returnSelectedImages:(UIButton *)sender  {
+        NSLog(@"Done button tapped"); // Add this line
+    
     NSMutableArray *selectedImages = [NSMutableArray array];
-    NSMutableArray<NSString *> *originalPaths = [NSMutableArray array]; // Array to hold original paths
+    dispatch_group_t group = dispatch_group_create();
     
     for (PHAsset *asset in self.selectedAssets) {
+        dispatch_group_enter(group);
         PHImageManager *imageManager = [PHImageManager defaultManager];
         
-        // Request the original image data and metadata
-        [imageManager requestImageDataForAsset:asset
-                                  options:nil
-                            resultHandler:^(NSData *imageData, NSString *dataUTI, UIImageOrientation orientation, NSDictionary *info) {
-            if (imageData) {
-                // Create a UIImage from the original data
-                UIImage *image = [UIImage imageWithData:imageData];
-                if (image) {
-                    // Adjust the image orientation
-                    image = [self fixOrientation:image withOrientation:orientation];
-                    [selectedImages addObject:image];
-                }
-                
-                // Create a unique file name for the original image
-                NSString *fileName = [NSString stringWithFormat:@"image_%@.%@", [[NSUUID UUID] UUIDString], [dataUTI pathExtension]];
-                NSString *filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:fileName];
-                
-                // Save the original image data directly to file
-                NSError *error = nil;
-                if ([imageData writeToFile:filePath options:NSAtomicWrite error:&error]) {
-                    [originalPaths addObject:filePath]; // Add the file path to the array
-                } else {
-                    NSLog(@"Failed to save image to path: %@, error: %@", filePath, error.localizedDescription);
-                }
+        PHImageRequestOptions *options = [[PHImageRequestOptions alloc] init];
+        options.synchronous = NO;
+        options.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+        options.resizeMode = PHImageRequestOptionsResizeModeNone;
+        
+        [imageManager requestImageForAsset:asset
+                              targetSize:PHImageManagerMaximumSize
+                             contentMode:PHImageContentModeDefault
+                                 options:options
+                           resultHandler:^(UIImage *result, NSDictionary *info) {
+            if (result) {
+                UIImage *fixedImage = [self fixOrientation:result withOrientation:result.imageOrientation];
+                [selectedImages addObject:fixedImage];
             }
-            
-            // Check if all images have been processed
-            if (selectedImages.count == self.selectedAssets.count) {
-                NSLog(@"Delegate: %@", self.delegate); // Log the delegate
-                
-                // Call the delegate method with both images and their original paths
-                [self.delegate didSelectImages:selectedImages ];
-                
-                [self dismissViewControllerAnimated:YES completion:nil];
-            }
+            dispatch_group_leave(group);
         }];
     }
+    
+    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        if ([self.delegate respondsToSelector:@selector(didSelectImages:)]) {
+            [self.delegate didSelectImages:selectedImages];
+        }
+        [self dismissViewControllerAnimated:YES completion:nil];
+    });
 }
 
 // Method to fix the orientation of the image
@@ -240,9 +222,17 @@
     }
 }
 
-// Method to handle cancel action
-- (void)cancelImageSelection {
-    [self dismissViewControllerAnimated:YES completion:nil];
+- (void)cancelImageSelection:(UIButton *)sender  {
+        NSLog(@"Cancel button tapped"); // Add this line
+
+    if ([self.delegate respondsToSelector:@selector(didCancelImageSelection)]) {
+        [self.delegate didCancelImageSelection];
+    }
+    
+    // Make sure we're on the main thread when dismissing
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self dismissViewControllerAnimated:YES completion:nil];
+    });
 }
 
 @end
