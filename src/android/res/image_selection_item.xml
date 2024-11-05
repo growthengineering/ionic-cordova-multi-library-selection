@@ -1,0 +1,30 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:clickable="true"
+  android:focusable="true"
+  android:layout_margin="0dp"
+  android:id="@+id/framelayout"
+  >
+
+  <ImageView
+    android:id="@+id/imageView"
+    android:layout_width="match_parent"
+    android:layout_height="150dp"
+    android:scaleType="centerCrop"
+    />
+
+  <TextView
+    android:id="@+id/selectionIndicator"
+    android:layout_width="30dp"
+    android:layout_height="30dp"
+    android:background="@drawable/circle_background"
+    android:textColor="@android:color/white"
+    android:gravity="center"
+    android:layout_gravity="bottom|end"
+    android:padding="4dp"
+    android:visibility="gone"
+    android:layout_marginBottom="8dp"
+    android:layout_marginEnd="8dp"
+    android:textSize="12sp" />
+</FrameLayout>
