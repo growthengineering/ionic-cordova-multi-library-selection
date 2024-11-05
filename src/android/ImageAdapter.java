@@ -2,6 +2,7 @@ package cordova.plugin.multilibraryselection;
 
 import android.content.Context;
 import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,38 +37,62 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
   @Override
   public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
     Uri imageUri = imageUris.get(position);
+    CustomImagePickerActivity activity = (CustomImagePickerActivity) context;
 
+    // Load the image
     Glide.with(context)
       .load(imageUri)
-      .into(holder.imageView); // Load the image into the ImageView
+      .into(holder.imageView);
 
-       if (((CustomImagePickerActivity) context).selectedImageUris.contains(imageUri)) {
-        holder.selectionIndicator.setText(String.valueOf(((CustomImagePickerActivity) context).selectedImageUris.indexOf(imageUri) + 1)); // Update selection number
-        holder.selectionIndicator.setVisibility(View.VISIBLE); // Show the selection indicator
-    } else {
-        holder.selectionIndicator.setVisibility(View.GONE); // Hide the selection indicator
-    }
-    
+    // Update selection indicator
+    updateSelectionIndicator(holder, imageUri, activity);
+
+    // Handle click events
     holder.itemView.setOnClickListener(v -> {
-
-      // Handle selection logic here
-      // Check if the image is already selected
-      if (!((CustomImagePickerActivity) context).selectedImageUris.contains(imageUri)) {
-        // If not selected, add to the selected list
-        ((CustomImagePickerActivity) context).selectedImageUris.add(imageUri);
-        holder.selectionIndicator.setText(String.valueOf(((CustomImagePickerActivity) context).selectedImageUris.size())); // Update selection number
-        holder.selectionIndicator.setVisibility(View.VISIBLE); // Show the selection indicator
-      } else {
-        // If already selected, remove from the selected list
-        int unselectedIndex = ((CustomImagePickerActivity) context).selectedImageUris.indexOf(imageUri);
-        ((CustomImagePickerActivity) context).selectedImageUris.remove(imageUri);
-        holder.selectionIndicator.setVisibility(View.GONE); // Hide the selection indicator
-        ((CustomImagePickerActivity) context).updateSelectionIndicators(unselectedIndex); // Update other selection indicators
-      }
+      handleImageSelection(holder, imageUri, activity);
     });
- 
 
+  }
 
+  private void updateSelectionIndicator(@NonNull ViewHolder holder, Uri imageUri, CustomImagePickerActivity activity) {
+    if (activity.selectedImageUris.contains(imageUri)) {
+            int selectionIndex = activity.selectedImageUris.indexOf(imageUri);
+            Integer order = activity.selectedImageMap.get(imageUri);
+            holder.selectionIndicator.setText(String.valueOf(order));
+            holder.selectionIndicator.setVisibility(View.VISIBLE);
+            Log.d("ImageAdapter", "Image at position " + selectionIndex + " has order " + order);
+        } else {
+            holder.selectionIndicator.setVisibility(View.GONE);
+        }
+  }
+
+  private void handleImageSelection(@NonNull ViewHolder holder, Uri imageUri, CustomImagePickerActivity activity) {
+    if (!activity.selectedImageUris.contains(imageUri)) {
+            // Add new selection
+            activity.selectedImageUris.add(imageUri);
+            int selectionOrder = activity.selectedImageUris.size();
+            activity.selectedImageMap.put(imageUri, selectionOrder);
+            
+            Log.d("ImageAdapter", "Added image at position: " + (selectionOrder - 1));
+            Log.d("ImageAdapter", "Total selected: " + activity.selectedImageUris.size());
+            Log.d("ImageAdapter", "Selection order: " + activity.selectedImageUris.toString());
+        } else {
+            // Remove selection and update subsequent indicators
+            int unselectedIndex = activity.selectedImageUris.indexOf(imageUri);
+            activity.selectedImageUris.remove(imageUri);
+            activity.selectedImageMap.remove(imageUri);
+            
+            // Update the order for remaining selections
+            for (int i = unselectedIndex; i < activity.selectedImageUris.size(); i++) {
+                Uri uri = activity.selectedImageUris.get(i);
+                activity.selectedImageMap.put(uri, i + 1);
+            }
+            
+            Log.d("ImageAdapter", "Removed image at index: " + unselectedIndex);
+            Log.d("ImageAdapter", "Updated selection order: " + activity.selectedImageUris.toString());
+        }
+
+        notifyDataSetChanged();
   }
 
   @Override

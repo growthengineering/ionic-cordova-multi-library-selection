@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.growthengineering.dev1.R;
@@ -33,12 +34,15 @@ import com.growthengineering.dev1.R;
 import com.bumptech.glide.Glide;
 
 public class CustomImagePickerActivity extends Activity {
-  List<Uri> selectedImageUris = new ArrayList<>();
+  final LinkedHashMap<Uri, Integer> selectedImageMap = new LinkedHashMap<>();
+
+  final List<Uri> selectedImageUris = new ArrayList<>();
   private RecyclerView recyclerView;
   private ImageAdapter imageAdapter;
   private List<Uri> imageUris = new ArrayList<>();
   private boolean isLoading = false;
   private LinearLayout imageContainer; // Add this line
+
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -130,7 +134,7 @@ public class CustomImagePickerActivity extends Activity {
     // Loop through the selected image URIs starting from the unselected index
     for (int i = unselectedIndex; i < selectedImageUris.size(); i++) {
       Uri selectedUri = selectedImageUris.get(i);
-      
+
       // Find the corresponding view in the RecyclerView
       int position = imageUris.indexOf(selectedUri);
       if (position != -1) {
@@ -158,7 +162,9 @@ public class CustomImagePickerActivity extends Activity {
 
   // When done selecting images, return the result
   private void returnSelectedImages() {
-    Log.d("CustomImagePickerActivity", "Selected URIs: " + selectedImageUris.toString());
+    Log.d("CustomImagePickerActivity", "Starting returnSelectedImages");
+    Log.d("CustomImagePickerActivity", "Selected URIs size: " + selectedImageUris.size());
+
     if (selectedImageUris.isEmpty()) {
       Log.e("CustomImagePickerActivity", "No images selected.");
       setResult(Activity.RESULT_CANCELED);
@@ -166,25 +172,17 @@ public class CustomImagePickerActivity extends Activity {
       return;
     }
 
+    // Create ordered list based on selection order
+    ArrayList<Uri> orderedUris = new ArrayList<>(selectedImageUris);
+
+    // Log the final order
+    for (int i = 0; i < orderedUris.size(); i++) {
+      Log.d("CustomImagePickerActivity", "Final order - Position " + i + ": " + orderedUris.get(i));
+    }
+
     Intent resultIntent = new Intent();
-    ArrayList<Uri> validUris = new ArrayList<>();
-
-    for (Uri uri : selectedImageUris) {
-      if (uri != null) {
-        validUris.add(uri);
-      } else {
-        Log.e("CustomImagePickerActivity", "Found null URI in selected images.");
-      }
-    }
-
-    if (!validUris.isEmpty()) {
-      resultIntent.putParcelableArrayListExtra("selectedImages", validUris);
-      setResult(Activity.RESULT_OK, resultIntent);
-    } else {
-      Log.e("CustomImagePickerActivity", "No valid images to return.");
-      setResult(Activity.RESULT_CANCELED);
-    }
-
+    resultIntent.putParcelableArrayListExtra("selectedImages", orderedUris);
+    setResult(Activity.RESULT_OK, resultIntent);
     finish();
   }
 }

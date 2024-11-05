@@ -45,14 +45,15 @@
 - (void)didSelectImages:(NSArray<UIImage *> *)images {
     NSMutableArray *results = [NSMutableArray array];
     
-    for (UIImage *image in images) {
-        NSString *tempFileName = [NSString stringWithFormat:@"temp_image_%d.jpg", (int)[[NSDate date] timeIntervalSince1970]];
+    for (NSInteger i = 0; i < images.count; i++) {
+        UIImage *image = images[i];
+        NSString *tempFileName = [NSString stringWithFormat:@"temp_image_%ld_%d.jpg", (long)i, (int)([[NSDate date] timeIntervalSince1970] * 1000)];
         NSString *tempFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFileName];
         
         NSData *imageData = UIImageJPEGRepresentation(image, 0.8);
         [imageData writeToFile:tempFilePath atomically:YES];
         
-        [results addObject: tempFilePath];
+        [results addObject:tempFilePath];
     }
     
     CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:results];

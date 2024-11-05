@@ -143,10 +143,17 @@
 - (void)returnSelectedImages:(UIButton *)sender  {
         NSLog(@"Done button tapped"); // Add this line
     
-    NSMutableArray *selectedImages = [NSMutableArray array];
+    // Create an array to store images in the correct order
+    NSMutableArray *selectedImages = [NSMutableArray arrayWithCapacity:self.selectedAssets.count];
+    // Pre-fill array with nil values to maintain order
+    for (NSInteger i = 0; i < self.selectedAssets.count; i++) {
+        [selectedImages addObject:[NSNull null]];
+    }
+    
     dispatch_group_t group = dispatch_group_create();
     
-    for (PHAsset *asset in self.selectedAssets) {
+    // Process each asset while maintaining its selection order
+    [self.selectedAssets enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL *stop) {
         dispatch_group_enter(group);
         PHImageManager *imageManager = [PHImageManager defaultManager];
         
@@ -162,15 +169,23 @@
                            resultHandler:^(UIImage *result, NSDictionary *info) {
             if (result) {
                 UIImage *fixedImage = [self fixOrientation:result withOrientation:result.imageOrientation];
-                [selectedImages addObject:fixedImage];
+                selectedImages[idx] = fixedImage; // Place image at correct index
             }
             dispatch_group_leave(group);
         }];
-    }
+    }];
     
     dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        // Remove any potential null values
+        NSMutableArray *finalImages = [NSMutableArray array];
+        for (id obj in selectedImages) {
+            if (![obj isEqual:[NSNull null]]) {
+                [finalImages addObject:obj];
+            }
+        }
+        
         if ([self.delegate respondsToSelector:@selector(didSelectImages:)]) {
-            [self.delegate didSelectImages:selectedImages];
+            [self.delegate didSelectImages:finalImages];
         }
         [self dismissViewControllerAnimated:YES completion:nil];
     });
