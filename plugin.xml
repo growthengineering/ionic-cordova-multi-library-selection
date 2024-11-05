@@ -17,17 +17,17 @@
             <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
         </config-file>
         <config-file target="AndroidManifest.xml" parent="application">
-          <activity android:name="org.apache.cordova.camera.CustomImagePickerActivity" android:theme="@style/Theme.AppCompat.NoActionBar"/>
+          <activity android:name="cordova.plugin.multilibraryselection.CustomImagePickerActivity" android:theme="@style/Theme.AppCompat.NoActionBar"/>
         </config-file>
          <config-file target="res/xml/config.xml" parent="/*">
-            <feature name="IonicCordovaMultiImageSelection">
-                <param name="android-package" value="cordova.plugin.multilibraryselection.IonicCordovaMultiImageSelection" />
+            <feature name="CustomLibraryLauncher">
+                <param name="android-package" value="cordova.plugin.multilibraryselection.CustomLibraryLauncher" />
             </feature>
         </config-file>
 
-        <source-file src="src/android/CustomLibraryLauncher.java" target-dir="src/org/apache/cordova/multiselection" />
-        <source-file src="src/android/CustomImagePickerActivity.java" target-dir="src/org/apache/cordova/camera" />
-        <source-file src="src/android/ImageAdapter.java" target-dir="src/org/apache/cordova/multiselection" />
+        <source-file src="src/android/CustomLibraryLauncher.java" target-dir="src/cordova/plugin/multiselection" />
+        <source-file src="src/android/CustomImagePickerActivity.java" target-dir="src/cordova/plugin/multiselection" />
+        <source-file src="src/android/ImageAdapter.java" target-dir="src/cordova/plugin/multiselection" />
         <source-file src="src/android/res/circle_background.xml" target-dir="res/drawable" />
         <source-file src="src/android/res/image_selection_item.xml" target-dir="res/layout" />
         <source-file src="src/android/res/activity_custom_image_picker.xml" target-dir="res/layout" />

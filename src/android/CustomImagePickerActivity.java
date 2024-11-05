@@ -1,4 +1,4 @@
-package org.apache.cordova.camera;
+package cordova.plugin.multilibraryselection;
 
 import android.Manifest;
 import android.app.Activity;
