@@ -60,7 +60,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
             Integer order = activity.selectedImageMap.get(imageUri);
             holder.selectionIndicator.setText(String.valueOf(order));
             holder.selectionIndicator.setVisibility(View.VISIBLE);
-            Log.d("ImageAdapter", "Image at position " + selectionIndex + " has order " + order);
         } else {
             holder.selectionIndicator.setVisibility(View.GONE);
         }
@@ -72,10 +71,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
             activity.selectedImageUris.add(imageUri);
             int selectionOrder = activity.selectedImageUris.size();
             activity.selectedImageMap.put(imageUri, selectionOrder);
-            
-            Log.d("ImageAdapter", "Added image at position: " + (selectionOrder - 1));
-            Log.d("ImageAdapter", "Total selected: " + activity.selectedImageUris.size());
-            Log.d("ImageAdapter", "Selection order: " + activity.selectedImageUris.toString());
         } else {
             // Remove selection and update subsequent indicators
             int unselectedIndex = activity.selectedImageUris.indexOf(imageUri);
@@ -87,9 +82,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
                 Uri uri = activity.selectedImageUris.get(i);
                 activity.selectedImageMap.put(uri, i + 1);
             }
-            
-            Log.d("ImageAdapter", "Removed image at index: " + unselectedIndex);
-            Log.d("ImageAdapter", "Updated selection order: " + activity.selectedImageUris.toString());
         }
 
         notifyDataSetChanged();

@@ -46,7 +46,6 @@ public class CustomImagePickerActivity extends Activity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    Log.e("##################### onCreate","##################### onCreate");
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_custom_image_picker);
     imageContainer = findViewById(R.id.imageContainer); // Initialize it
@@ -79,8 +78,6 @@ public class CustomImagePickerActivity extends Activity {
   }
 
   private void loadImages() {
-    Log.e("##################### loadImages","##################### loadImages");
-
     String[] projection = {MediaStore.Images.Media._ID, MediaStore.Images.Media.DATA};
     ContentResolver contentResolver = getContentResolver();
 
@@ -93,8 +90,6 @@ public class CustomImagePickerActivity extends Activity {
     );
 
     if (cursor != null) {
-      Log.e("CustomImagePickerActivity", "Cursor count: " + cursor.getCount());
-
       while (cursor.moveToNext()) {
         int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
         long id = cursor.getLong(idColumn);
@@ -102,10 +97,7 @@ public class CustomImagePickerActivity extends Activity {
         imageUris.add(imageUri); // Add the image URI to the list
       }
       cursor.close();
-    } else {
-      Log.e("CustomImagePickerActivity", "Cursor is null");
     }
-
     imageAdapter.notifyDataSetChanged(); // Notify the adapter of data changes
   }
 
@@ -155,18 +147,14 @@ public class CustomImagePickerActivity extends Activity {
     try {
       return BitmapFactory.decodeStream(getContentResolver().openInputStream(uri));
     } catch (Exception e) {
-      Log.e("CustomImagePickerActivity", "Error loading image from URI: " + uri, e);
       return null;
     }
   }
 
   // When done selecting images, return the result
   private void returnSelectedImages() {
-    Log.d("CustomImagePickerActivity", "Starting returnSelectedImages");
-    Log.d("CustomImagePickerActivity", "Selected URIs size: " + selectedImageUris.size());
 
     if (selectedImageUris.isEmpty()) {
-      Log.e("CustomImagePickerActivity", "No images selected.");
       setResult(Activity.RESULT_CANCELED);
       finish();
       return;
@@ -174,11 +162,6 @@ public class CustomImagePickerActivity extends Activity {
 
     // Create ordered list based on selection order
     ArrayList<Uri> orderedUris = new ArrayList<>(selectedImageUris);
-
-    // Log the final order
-    for (int i = 0; i < orderedUris.size(); i++) {
-      Log.d("CustomImagePickerActivity", "Final order - Position " + i + ": " + orderedUris.get(i));
-    }
 
     Intent resultIntent = new Intent();
     resultIntent.putParcelableArrayListExtra("selectedImages", orderedUris);

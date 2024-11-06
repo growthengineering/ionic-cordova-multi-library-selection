@@ -141,8 +141,6 @@
 }
 
 - (void)returnSelectedImages:(UIButton *)sender  {
-        NSLog(@"Done button tapped"); // Add this line
-    
     // Create an array to store images in the correct order
     NSMutableArray *selectedImages = [NSMutableArray arrayWithCapacity:self.selectedAssets.count];
     // Pre-fill array with nil values to maintain order
@@ -238,8 +236,6 @@
 }
 
 - (void)cancelImageSelection:(UIButton *)sender  {
-        NSLog(@"Cancel button tapped"); // Add this line
-
     if ([self.delegate respondsToSelector:@selector(didCancelImageSelection)]) {
         [self.delegate didCancelImageSelection];
     }
