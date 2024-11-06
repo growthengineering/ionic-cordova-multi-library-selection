@@ -36,21 +36,29 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
 
   @Override
   public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-    Uri imageUri = imageUris.get(position);
-    CustomImagePickerActivity activity = (CustomImagePickerActivity) context;
+    Uri mediaUri = imageUris.get(position);
+        CustomImagePickerActivity activity = (CustomImagePickerActivity) context;
 
-    // Load the image
-    Glide.with(context)
-      .load(imageUri)
-      .into(holder.imageView);
+        // Load the media (image or video thumbnail)
+        if (activity.getMediaType() == 1) { // VIDEO
+            Glide.with(context)
+                .load(mediaUri)
+                .thumbnail(0.1f)  // Load a smaller thumbnail for videos
+                .into(holder.imageView);
+        } else {
+            Glide.with(context)
+                .load(mediaUri)
+                .into(holder.imageView);
+                
+        }
 
-    // Update selection indicator
-    updateSelectionIndicator(holder, imageUri, activity);
+          // Update selection indicator
+          updateSelectionIndicator(holder, mediaUri, activity);
 
-    // Handle click events
-    holder.itemView.setOnClickListener(v -> {
-      handleImageSelection(holder, imageUri, activity);
-    });
+          // Handle click events
+          holder.itemView.setOnClickListener(v -> {
+            handleImageSelection(holder, mediaUri, activity);
+          });
 
   }
 
@@ -76,7 +84,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
             int unselectedIndex = activity.selectedImageUris.indexOf(imageUri);
             activity.selectedImageUris.remove(imageUri);
             activity.selectedImageMap.remove(imageUri);
-            
+
             // Update the order for remaining selections
             for (int i = unselectedIndex; i < activity.selectedImageUris.size(); i++) {
                 Uri uri = activity.selectedImageUris.get(i);

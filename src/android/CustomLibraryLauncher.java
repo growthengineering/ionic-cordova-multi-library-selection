@@ -20,21 +20,14 @@ import java.util.ArrayList;
 
 public class CustomLibraryLauncher extends CordovaPlugin {
     private static final String LOG_TAG = "CustomLibraryLauncher";
-    
-    // Constants for type of media to select
-    private static final int PHOTOLIBRARY = 0;
-    private static final int PICTURE = 0;
-    private static final int VIDEO = 1;
-    private static final int ALLMEDIA = 2;
-    
-    private static final int DATA_URL = 0;
-    private static final int FILE_URI = 1;
-    
-    private int destType;
-    private int srcType;
     private int mediaType;
     private CallbackContext callbackContext;
-    
+     private static final int PICTURE = 0;
+    private static final int VIDEO = 1;
+    private static final int PHOTOLIBRARY = 2;
+
+    private int srcType;
+    private int destType;
     private static final int PERMISSION_REQUEST_CODE = 100;
 
     @Override
@@ -42,9 +35,8 @@ public class CustomLibraryLauncher extends CordovaPlugin {
         this.callbackContext = callbackContext;
 
         if (action.equals("accessLibrary")) {
-            this.srcType = PHOTOLIBRARY;
-            this.destType = args.getInt(1);
-            this.mediaType = args.getInt(6);
+            this.srcType = PHOTOLIBRARY; 
+            this.mediaType = args.getInt(0);
 
             if (!hasPermissions()) {
                 requestPermissions();
@@ -91,6 +83,8 @@ public class CustomLibraryLauncher extends CordovaPlugin {
 
     private void launchGallery() {
         Intent intent = new Intent(cordova.getActivity(), CustomImagePickerActivity.class);
+        intent.putExtra("mediaType", this.mediaType); // Pass mediaType to activity
+
         this.cordova.startActivityForResult(this, intent, PHOTOLIBRARY);
     }
 

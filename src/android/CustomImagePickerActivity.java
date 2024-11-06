@@ -42,6 +42,7 @@ public class CustomImagePickerActivity extends Activity {
   private List<Uri> imageUris = new ArrayList<>();
   private boolean isLoading = false;
   private LinearLayout imageContainer; // Add this line
+  private int mediaType;
 
 
   @Override
@@ -49,6 +50,7 @@ public class CustomImagePickerActivity extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_custom_image_picker);
     imageContainer = findViewById(R.id.imageContainer); // Initialize it
+    mediaType = getIntent().getIntExtra("mediaType", 0); // Default to PICTURE (0)
 
     recyclerView = findViewById(R.id.recyclerView);
     imageAdapter = new ImageAdapter(this, imageUris);
@@ -78,27 +80,50 @@ public class CustomImagePickerActivity extends Activity {
   }
 
   private void loadImages() {
-    String[] projection = {MediaStore.Images.Media._ID, MediaStore.Images.Media.DATA};
+      Uri contentUri;
+        String[] projection;
+        String sortOrder;
     ContentResolver contentResolver = getContentResolver();
 
-    Cursor cursor = contentResolver.query(
-      MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-      projection,
-      null,
-      null,
-      MediaStore.Images.Media.DATE_TAKEN + " DESC"
-    );
+    if (mediaType == 1) { // VIDEO 
+        contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+        projection = new String[]{
+            MediaStore.Video.Media._ID,
+            MediaStore.Video.Media.DATA
+        }; 
+        sortOrder = MediaStore.Video.Media.DATE_TAKEN + " DESC";
 
-    if (cursor != null) {
-      while (cursor.moveToNext()) {
-        int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
-        long id = cursor.getLong(idColumn);
-        Uri imageUri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, String.valueOf(id));
-        imageUris.add(imageUri); // Add the image URI to the list
-      }
-      cursor.close();
+    } else { // PICTURE (default)
+        contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        projection = new String[]{
+            MediaStore.Images.Media._ID,
+            MediaStore.Images.Media.DATA
+        };
+        sortOrder = MediaStore.Images.Media.DATE_TAKEN + " DESC";
     }
-    imageAdapter.notifyDataSetChanged(); // Notify the adapter of data changes
+
+
+     Cursor cursor = contentResolver.query(
+            contentUri,
+            projection,
+            null,
+            null,
+            sortOrder
+        );
+
+
+   if (cursor != null) {
+            while (cursor.moveToNext()) {
+                int idColumn = cursor.getColumnIndexOrThrow(mediaType == 1 ? 
+                    MediaStore.Video.Media._ID : 
+                    MediaStore.Images.Media._ID);
+                long id = cursor.getLong(idColumn);
+                Uri mediaUri = Uri.withAppendedPath(contentUri, String.valueOf(id));
+                imageUris.add(mediaUri);
+            }
+            cursor.close();
+        }
+        imageAdapter.notifyDataSetChanged();
   }
 
   private void loadMoreImages() {
@@ -164,8 +189,15 @@ public class CustomImagePickerActivity extends Activity {
     ArrayList<Uri> orderedUris = new ArrayList<>(selectedImageUris);
 
     Intent resultIntent = new Intent();
+    resultIntent.putExtra("mediaType", mediaType); // Add mediaType to result
+
     resultIntent.putParcelableArrayListExtra("selectedImages", orderedUris);
     setResult(Activity.RESULT_OK, resultIntent);
     finish();
   }
+
+  // Add getter method
+    public int getMediaType() {
+        return mediaType;
+    }
 }
