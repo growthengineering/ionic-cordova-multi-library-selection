@@ -8,10 +8,9 @@
     // Hide the navigation bar
     self.navigationController.navigationBarHidden = YES;
     
-    // Add this to ensure the view starts from the top
-    //if (@available(iOS 11.0, *)) {
-    //    self.additionalSafeAreaInsets = UIEdgeInsetsMake(0, 0, 0, 0);
-   // }
+    [[UIApplication sharedApplication] sendAction:@selector(resignFirstResponder) to:nil from:nil forEvent:nil];
+    [[[UIApplication sharedApplication] keyWindow] endEditing:YES];
+    
     
     // Initialize selectedAssets
     self.selectedAssets = [NSMutableArray array];
@@ -80,10 +79,25 @@
     [self loadImages];
 }
  
+ - (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    
+    // Force dismiss keyboard when view is about to appear
+    [[UIApplication sharedApplication] sendAction:@selector(resignFirstResponder) to:nil from:nil forEvent:nil];
+    [[[UIApplication sharedApplication] keyWindow] endEditing:YES];
+}
 
 - (void)loadImages {
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
     fetchOptions.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:NO]];
+    
+    // Filter based on media type
+    if (self.mediaType == 1) { // Video
+        fetchOptions.predicate = [NSPredicate predicateWithFormat:@"mediaType = %d", PHAssetMediaTypeVideo];
+    } else { // Images
+        fetchOptions.predicate = [NSPredicate predicateWithFormat:@"mediaType = %d", PHAssetMediaTypeImage];
+    }
+    
     PHFetchResult *fetchResult = [PHAsset fetchAssetsWithOptions:fetchOptions];
     
     self.allAssets = [NSMutableArray array];
@@ -105,15 +119,41 @@
     PHAsset *asset = self.allAssets[indexPath.item];
     PHImageManager *imageManager = [PHImageManager defaultManager];
     
+    // Add image request options for better quality
+    PHImageRequestOptions *options = [[PHImageRequestOptions alloc] init];
+    options.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+    options.resizeMode = PHImageRequestOptionsResizeModeFast;
+    
+    // Calculate size based on screen scale for better quality
+    CGFloat scale = [UIScreen mainScreen].scale;
+    CGSize targetSize = CGSizeMake(130 * scale, 130 * scale);
+    
     [imageManager requestImageForAsset:asset
-                          targetSize:CGSizeMake(100, 100) // Set the desired size
+                          targetSize:targetSize
                          contentMode:PHImageContentModeAspectFill
-                             options:nil
+                             options:options  // Added options
                        resultHandler:^(UIImage *result, NSDictionary *info) {
         UIImageView *imageView = [[UIImageView alloc] initWithImage:result];
         imageView.contentMode = UIViewContentModeScaleAspectFill;
         imageView.clipsToBounds = YES;
-        cell.backgroundView = imageView; // Set the image view as the cell's background
+        cell.backgroundView = imageView;
+        
+        // Add video duration indicator if it's a video
+        if (self.mediaType == 1 && asset.duration > 0) {
+            UILabel *durationLabel = [cell.contentView viewWithTag:200];
+            if (!durationLabel) {
+                durationLabel = [[UILabel alloc] initWithFrame:CGRectMake(5, 5, 50, 20)];
+                durationLabel.tag = 200;
+                durationLabel.textColor = [UIColor whiteColor];
+                durationLabel.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.7];
+                durationLabel.font = [UIFont systemFontOfSize:12];
+                durationLabel.textAlignment = NSTextAlignmentCenter;
+                durationLabel.layer.cornerRadius = 4;
+                durationLabel.layer.masksToBounds = YES;
+                [cell.contentView addSubview:durationLabel];
+            }
+            durationLabel.text = [self formatDuration:asset.duration];
+        }
         
         // Remove existing badge if any
         UILabel *existingBadge = [cell.contentView viewWithTag:100];
@@ -140,7 +180,22 @@
     return cell;
 }
 
-- (void)returnSelectedImages:(UIButton *)sender  {
+- (NSString *)formatDuration:(NSTimeInterval)duration {
+    NSInteger minutes = (NSInteger)duration / 60;
+    NSInteger seconds = (NSInteger)duration % 60;
+    return [NSString stringWithFormat:@"%02ld:%02ld", (long)minutes, (long)seconds];
+}
+
+- (void)returnSelectedImages:(UIButton *)sender {
+    if (self.mediaType == 1) {
+        [self returnSelectedVideos];
+    } else {
+        [self returnSelectedImagesOriginal];
+    }
+}
+
+// Rename existing image return method
+- (void)returnSelectedImagesOriginal {
     // Create an array to store images in the correct order
     NSMutableArray *selectedImages = [NSMutableArray arrayWithCapacity:self.selectedAssets.count];
     // Pre-fill array with nil values to maintain order
@@ -184,6 +239,57 @@
         
         if ([self.delegate respondsToSelector:@selector(didSelectImages:)]) {
             [self.delegate didSelectImages:finalImages];
+        }
+        [self dismissViewControllerAnimated:YES completion:nil];
+    });
+}
+
+// Add new method for video return
+- (void)returnSelectedVideos {
+    NSMutableArray *selectedVideoPaths = [NSMutableArray arrayWithCapacity:self.selectedAssets.count];
+    dispatch_group_t group = dispatch_group_create();
+    
+    [self.selectedAssets enumerateObjectsUsingBlock:^(PHAsset *asset, NSUInteger idx, BOOL *stop) {
+        dispatch_group_enter(group);
+        
+        PHVideoRequestOptions *options = [[PHVideoRequestOptions alloc] init];
+        options.version = PHVideoRequestOptionsVersionOriginal;
+        options.deliveryMode = PHVideoRequestOptionsDeliveryModeHighQualityFormat;
+        options.networkAccessAllowed = YES; // Add this to allow iCloud videos
+        
+        [[PHImageManager defaultManager] requestAVAssetForVideo:asset
+                                                      options:options
+                                                resultHandler:^(AVAsset *avAsset, AVAudioMix *audioMix, NSDictionary *info) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if ([avAsset isKindOfClass:[AVURLAsset class]]) {
+                    AVURLAsset *urlAsset = (AVURLAsset *)avAsset;
+                    NSString *tempFileName = [NSString stringWithFormat:@"temp_video_%lu_%d.mp4", (unsigned long)idx, (int)([[NSDate date] timeIntervalSince1970] * 1000)];
+                    NSString *tempFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFileName];
+                    
+                    // Remove existing file if it exists
+                    if ([[NSFileManager defaultManager] fileExistsAtPath:tempFilePath]) {
+                        [[NSFileManager defaultManager] removeItemAtPath:tempFilePath error:nil];
+                    }
+                    
+                    NSError *error;
+                    if ([[NSFileManager defaultManager] copyItemAtURL:urlAsset.URL toURL:[NSURL fileURLWithPath:tempFilePath] error:&error]) {
+                        [selectedVideoPaths addObject:tempFilePath];
+                        NSLog(@"Video saved successfully at: %@", tempFilePath);
+                    } else {
+                        NSLog(@"Error saving video: %@", error);
+                    }
+                } else {
+                    NSLog(@"Asset is not a URL asset");
+                }
+                dispatch_group_leave(group);
+            });
+        }];
+    }];
+    
+    dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        NSLog(@"Selected video paths: %@", selectedVideoPaths);
+        if ([self.delegate respondsToSelector:@selector(didSelectVideos:)]) {
+            [self.delegate didSelectVideos:selectedVideoPaths];
         }
         [self dismissViewControllerAnimated:YES completion:nil];
     });
@@ -244,6 +350,23 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         [self dismissViewControllerAnimated:YES completion:nil];
     });
+}
+
+- (void)verifyAndExportVideo:(AVURLAsset *)urlAsset toPath:(NSString *)tempFilePath completion:(void (^)(BOOL success))completion {
+    // First check if we can access the video URL
+    if ([[NSFileManager defaultManager] isReadableFileAtPath:urlAsset.URL.path]) {
+        NSError *error;
+        if ([[NSFileManager defaultManager] copyItemAtURL:urlAsset.URL toURL:[NSURL fileURLWithPath:tempFilePath] error:&error]) {
+            NSLog(@"Video exported successfully to: %@", tempFilePath);
+            completion(YES);
+        } else {
+            NSLog(@"Failed to export video: %@", error);
+            completion(NO);
+        }
+    } else {
+        NSLog(@"Cannot access video at path: %@", urlAsset.URL.path);
+        completion(NO);
+    }
 }
 
 @end

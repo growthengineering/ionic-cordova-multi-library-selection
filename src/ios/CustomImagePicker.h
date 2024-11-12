@@ -3,6 +3,7 @@
 
 @protocol CustomImagePickerDelegate <NSObject>
 - (void)didSelectImages:(NSArray<UIImage *> *)images;
+- (void)didSelectVideos:(NSArray<NSString *> *)videoPaths;
 - (void)didCancelImageSelection;
 @end
 
@@ -12,5 +13,6 @@
 @property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray<PHAsset *> *selectedAssets;
 @property (nonatomic, strong) NSMutableArray<PHAsset *> *allAssets;
+@property (nonatomic, assign) NSInteger mediaType; // 0 for images, 1 for videos
 
 @end

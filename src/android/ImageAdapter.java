@@ -43,13 +43,18 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
         if (activity.getMediaType() == 1) { // VIDEO
             Glide.with(context)
                 .load(mediaUri)
-                .thumbnail(0.1f)  // Load a smaller thumbnail for videos
+                .thumbnail(0.1f)
                 .into(holder.imageView);
+            
+            // Show video duration
+            String duration = getVideoDuration(mediaUri);
+            holder.durationLabel.setText(duration);
+            holder.durationLabel.setVisibility(View.VISIBLE);
         } else {
             Glide.with(context)
                 .load(mediaUri)
                 .into(holder.imageView);
-                
+            holder.durationLabel.setVisibility(View.GONE);
         }
 
           // Update selection indicator
@@ -95,6 +100,22 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
         notifyDataSetChanged();
   }
 
+  private String getVideoDuration(Uri videoUri) {
+    try {
+        android.media.MediaMetadataRetriever retriever = new android.media.MediaMetadataRetriever();
+        retriever.setDataSource(context, videoUri);
+        String time = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
+        long timeInMillisec = Long.parseLong(time);
+        long duration = timeInMillisec / 1000;
+        long minutes = duration / 60;
+        long seconds = duration % 60;
+        retriever.release();
+        return String.format("%d:%02d", minutes, seconds);
+    } catch (Exception e) {
+        return "";
+    }
+  }
+
   @Override
   public int getItemCount() {
     return imageUris.size();
@@ -105,6 +126,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
     Button cancelButton;
     Button doneButton;
     TextView selectionIndicator;
+    TextView durationLabel;
 
     public ViewHolder(@NonNull View itemView) {
       super(itemView);
@@ -112,6 +134,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
       cancelButton = itemView.findViewById(R.id.btnCancel);
       doneButton = itemView.findViewById(R.id.btnDone);
       selectionIndicator = itemView.findViewById(R.id.selectionIndicator);
+      durationLabel = itemView.findViewById(R.id.durationLabel);
     }
   }
 }
