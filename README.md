@@ -15,6 +15,10 @@ This Cordova plugin allows users to select multiple images and videos from the d
 - 🔄 **Toggle Between Media Types:** Easily switch between selecting images and videos.
 - 📏 **Video Duration Display:** Display video duration for easy selection.
 
+## 📦 Installation
+
+To install the plugin, simply add it to your Ionic project using the following command:
+
 ```bash
 cordova plugin add https://github.com/growthengineering/
 ionic-cordova-multi-library-selection
