@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="cordova-plugin-multilibraryselection"
+    version="0.0.1">
+    <name>IonicCordovaMultiImageSelection</name>
+     
+    <js-module  name="multilibraryselection" src="www/IonicCordovaMultiImageSelection.js">
+        <clobbers target="cordova.plugin.multilibraryselection" />
+    </js-module> 
+
+    <!-- android -->
+    <platform name="android">
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+            <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+            <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+        </config-file>
+        <config-file target="AndroidManifest.xml" parent="application">
+          <activity android:name="cordova.plugin.multilibraryselection.CustomImagePickerActivity" android:theme="@style/Theme.AppCompat.NoActionBar"/>
+        </config-file>
+         <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="CustomLibraryLauncher">
+                <param name="android-package" value="cordova.plugin.multilibraryselection.CustomLibraryLauncher" />
+            </feature>
+        </config-file>
+
+        <source-file src="src/android/CustomLibraryLauncher.java" target-dir="src/cordova/plugin/multiselection" />
+        <source-file src="src/android/CustomImagePickerActivity.java" target-dir="src/cordova/plugin/multiselection" />
+        <source-file src="src/android/ImageAdapter.java" target-dir="src/cordova/plugin/multiselection" />
+        <source-file src="src/android/res/circle_background.xml" target-dir="res/drawable" />
+        <source-file src="src/android/res/image_selection_item.xml" target-dir="res/layout" />
+        <source-file src="src/android/res/activity_custom_image_picker.xml" target-dir="res/layout" />
+
+        <preference name="ANDROIDX_CORE_VERSION" default="1.6.+"/>
+        <framework src="androidx.core:core:$ANDROIDX_CORE_VERSION" />
+
+        <preference name="ANDROIDX_RECYCLER_VIEW_VERSION" default="1.2.1"/>
+        <framework src="androidx.recyclerview:recyclerview:$ANDROIDX_RECYCLER_VIEW_VERSION" />
+ 
+    </platform>
+
+     <!-- ios -->
+     <platform name="ios">
+   
+        <config-file target="config.xml" parent="/*">
+            <feature name="CustomLibraryLauncher">
+                <param name="ios-package" value="CustomLibraryLauncher" />
+            </feature>
+        </config-file>
+         
+        <header-file src="src/ios/CustomLibraryLauncher.h" /> 
+        <source-file src="src/ios/CustomLibraryLauncher.m" />
+        <header-file src="src/ios/CustomImagePicker.h" />
+        <source-file src="src/ios/CustomImagePicker.m" />
+        
+        <framework src="Photos.framework" />
+        <framework src="AVFoundation.framework" />
+
+     </platform> 
+
+</plugin>

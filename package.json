@@ -1,0 +1,24 @@
+{
+  "name": "IonicCordovaMultiImageSelection",
+  "version": "0.0.1",
+  "description": "Ionic Cordova Plugin (Library)",
+  "cordova": {
+    "id": "cordova.plugin.multilibraryselection",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joaolourencoge/ionic-cordova-multi-library-selection.git"
+  },  
+  "keywords": [ 
+  ],
+  "author": "Growth Engineering Technologies",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/joaolourencoge/ionic-cordova-multi-library-selection/issues"
+  },
+  "homepage": "https://github.com/joaolourencoge/ionic-cordova-multi-library-selection#readme"
+}
