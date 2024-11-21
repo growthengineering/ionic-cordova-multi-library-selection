@@ -28,9 +28,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import com.growthengineering.dev1.R;
 import androidx.annotation.NonNull;
-import com.growthengineering.dev1.R;
 import com.bumptech.glide.Glide;
 
 public class CustomImagePickerActivity extends Activity {
@@ -44,28 +42,31 @@ public class CustomImagePickerActivity extends Activity {
   private LinearLayout imageContainer; // Add this line
   private int mediaType;
 
+  private int getResourceId(String resourceName, String resourceType) {
+    return getResources().getIdentifier(resourceName, resourceType, getPackageName());
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_custom_image_picker);
-    imageContainer = findViewById(R.id.imageContainer); // Initialize it
-    mediaType = getIntent().getIntExtra("mediaType", 0); // Default to PICTURE (0)
+    setContentView(getResourceId("activity_custom_image_picker", "layout"));
+    imageContainer = findViewById(getResourceId("imageContainer", "id"));
+    mediaType = getIntent().getIntExtra("mediaType", 0);
 
-    recyclerView = findViewById(R.id.recyclerView);
+    recyclerView = findViewById(getResourceId("recyclerView", "id"));
     imageAdapter = new ImageAdapter(this, imageUris);
     recyclerView.setAdapter(imageAdapter);
-    recyclerView.setLayoutManager(new GridLayoutManager(this, 3)); // 3 columns
+    recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
     recyclerView.setClickable(true);
 
     loadImages();
 
     // Set up the Cancel button
-    Button btnCancel = findViewById(R.id.btnCancel);
-    btnCancel.setOnClickListener(v -> finish()); // Close the activity
+    Button btnCancel = findViewById(getResourceId("btnCancel", "id"));
+    btnCancel.setOnClickListener(v -> finish());
 
     // Set up the Done button
-    Button btnDone = findViewById(R.id.btnDone);
+    Button btnDone = findViewById(getResourceId("btnDone", "id"));
     btnDone.setOnClickListener(v -> returnSelectedImages());
 
     recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -134,37 +135,35 @@ public class CustomImagePickerActivity extends Activity {
   }
 
   private void addImageView(Uri imageUri) {
-    View itemView = LayoutInflater.from(this).inflate(R.layout.image_selection_item, null);
-    ImageView imageView = itemView.findViewById(R.id.imageView);
-    TextView selectionIndicator = itemView.findViewById(R.id.selectionIndicator);
+    View itemView = LayoutInflater.from(this).inflate(
+        getResourceId("image_selection_item", "layout"), 
+        null
+    );
+    ImageView imageView = itemView.findViewById(getResourceId("imageView", "id"));
+    TextView selectionIndicator = itemView.findViewById(getResourceId("selectionIndicator", "id"));
 
-    // Load image using Glide
     Glide.with(this)
-      .load(imageUri)
-      .into(imageView);
+        .load(imageUri)
+        .into(imageView);
 
     imageContainer.addView(itemView);
   }
 
-  // New method to update selection indicators
   void updateSelectionIndicators(int unselectedIndex) {
-    // Loop through the selected image URIs starting from the unselected index
     for (int i = unselectedIndex; i < selectedImageUris.size(); i++) {
-      Uri selectedUri = selectedImageUris.get(i);
-
-      // Find the corresponding view in the RecyclerView
-      int position = imageUris.indexOf(selectedUri);
-      if (position != -1) {
-        // Get the ViewHolder for the selected item
-        RecyclerView.ViewHolder viewHolder = recyclerView.findViewHolderForAdapterPosition(position);
-        if (viewHolder != null) {
-          // Update the selection indicator
-          TextView selectionIndicator = viewHolder.itemView.findViewById(R.id.selectionIndicator);
-          if (selectionIndicator != null) {
-            selectionIndicator.setText(String.valueOf(i + 1)); // Update the text to reflect the new order
-          }
+        Uri selectedUri = selectedImageUris.get(i);
+        int position = imageUris.indexOf(selectedUri);
+        if (position != -1) {
+            RecyclerView.ViewHolder viewHolder = recyclerView.findViewHolderForAdapterPosition(position);
+            if (viewHolder != null) {
+                TextView selectionIndicator = viewHolder.itemView.findViewById(
+                    getResourceId("selectionIndicator", "id")
+                );
+                if (selectionIndicator != null) {
+                    selectionIndicator.setText(String.valueOf(i + 1));
+                }
+            }
         }
-      }
     }
   }
 

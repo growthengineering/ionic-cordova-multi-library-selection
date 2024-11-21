@@ -14,8 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 
-import com.growthengineering.dev1.R;
-
 import java.util.List;
 
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> {
@@ -27,10 +25,18 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
     this.imageUris = imageUris;
   }
 
+  private int getResourceId(String resourceName, String resourceType) {
+    return context.getResources().getIdentifier(resourceName, resourceType, context.getPackageName());
+  }
+
   @NonNull
   @Override
   public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-    View view = LayoutInflater.from(context).inflate(R.layout.image_selection_item, parent, false);
+    View view = LayoutInflater.from(context).inflate(
+        context.getResources().getIdentifier("image_selection_item", "layout", context.getPackageName()),
+        parent, 
+        false
+    );
     return new ViewHolder(view);
   }
 
@@ -130,11 +136,14 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
 
     public ViewHolder(@NonNull View itemView) {
       super(itemView);
-      imageView = itemView.findViewById(R.id.imageView);
-      cancelButton = itemView.findViewById(R.id.btnCancel);
-      doneButton = itemView.findViewById(R.id.btnDone);
-      selectionIndicator = itemView.findViewById(R.id.selectionIndicator);
-      durationLabel = itemView.findViewById(R.id.durationLabel);
+      Context context = itemView.getContext();
+      String packageName = context.getPackageName();
+      
+      imageView = itemView.findViewById(context.getResources().getIdentifier("imageView", "id", packageName));
+      cancelButton = itemView.findViewById(context.getResources().getIdentifier("btnCancel", "id", packageName));
+      doneButton = itemView.findViewById(context.getResources().getIdentifier("btnDone", "id", packageName));
+      selectionIndicator = itemView.findViewById(context.getResources().getIdentifier("selectionIndicator", "id", packageName));
+      durationLabel = itemView.findViewById(context.getResources().getIdentifier("durationLabel", "id", packageName));
     }
   }
 }
