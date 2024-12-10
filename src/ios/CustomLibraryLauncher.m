@@ -58,7 +58,7 @@
         NSString *tempFileName = [NSString stringWithFormat:@"temp_image_%ld_%d.jpg", (long)i, (int)([[NSDate date] timeIntervalSince1970] * 1000)];
         NSString *tempFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFileName];
         
-        NSData *imageData = UIImageJPEGRepresentation(image, 0.8);
+        NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
         [imageData writeToFile:tempFilePath atomically:YES];
         
         [results addObject:tempFilePath];

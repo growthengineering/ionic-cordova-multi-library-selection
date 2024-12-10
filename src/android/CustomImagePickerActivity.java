@@ -8,6 +8,8 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -24,6 +26,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -67,7 +71,8 @@ public class CustomImagePickerActivity extends Activity {
 
     // Set up the Done button
     Button btnDone = findViewById(getResourceId("btnDone", "id"));
-    btnDone.setOnClickListener(v -> returnSelectedImages());
+    btnDone.setOnClickListener(v -> onDoneButtonClicked());
+    
 
     recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
       @Override
@@ -175,6 +180,20 @@ public class CustomImagePickerActivity extends Activity {
     }
   }
 
+  private void onDoneButtonClicked() {
+    ArrayList<Uri> convertedUris = new ArrayList<>();
+    for (Uri uri : selectedImageUris) {
+        Uri convertedUri = convertHeicToJpeg(uri);
+        convertedUris.add(convertedUri);
+    }
+    
+    // Use convertedUris instead of selectedImageUris when returning results
+    Intent resultIntent = new Intent();
+    resultIntent.putParcelableArrayListExtra("selectedImages", convertedUris);
+    setResult(RESULT_OK, resultIntent);
+    finish();
+}
+
   // When done selecting images, return the result
   private void returnSelectedImages() {
 
@@ -194,6 +213,54 @@ public class CustomImagePickerActivity extends Activity {
     setResult(Activity.RESULT_OK, resultIntent);
     finish();
   }
+
+
+
+  private Uri convertHeicToJpeg(Uri imageUri) {
+    String mimeType = getContentResolver().getType(imageUri);
+    if (mimeType != null && (mimeType.equals("image/heic") || mimeType.equals("image/heif"))) {
+        try {
+            // Get the original orientation
+            ExifInterface exif = new ExifInterface(getContentResolver().openInputStream(imageUri));
+            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+
+            // Convert HEIC to Bitmap
+            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+            
+            // Rotate bitmap if needed
+            Matrix matrix = new Matrix();
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    matrix.postRotate(90);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    matrix.postRotate(180);
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    matrix.postRotate(270);
+                    break;
+            }
+            
+            if (orientation != ExifInterface.ORIENTATION_NORMAL) {
+                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            }
+
+            // Save to file
+            File outputDir = getCacheDir();
+            File outputFile = File.createTempFile("converted_", ".jpg", outputDir);
+            
+            FileOutputStream out = new FileOutputStream(outputFile);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            out.close();
+            
+            return Uri.fromFile(outputFile);
+        } catch (Exception e) {
+            Log.e("CustomImagePickerActivity", "Error converting HEIC to JPEG", e);
+        }
+    }
+    return imageUri;
+  }
+
 
   // Add getter method
     public int getMediaType() {
