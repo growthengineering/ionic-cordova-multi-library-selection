@@ -136,52 +136,53 @@
                          contentMode:PHImageContentModeAspectFill
                              options:options  // Added options
                        resultHandler:^(UIImage *result, NSDictionary *info) {
-        // Check if the cell is still displaying the correct asset
-        if (cell.tag == indexPath.item) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                UIImageView *imageView = [[UIImageView alloc] initWithImage:result];
-                imageView.contentMode = UIViewContentModeScaleAspectFill;
-                imageView.clipsToBounds = YES;
-                cell.backgroundView = imageView;
-                
-                // Add video duration indicator if it's a video
-                if (self.mediaType == 1 && asset.duration > 0) {
-                    UILabel *durationLabel = [cell.contentView viewWithTag:200];
-                    if (!durationLabel) {
-                        durationLabel = [[UILabel alloc] initWithFrame:CGRectMake(5, 5, 50, 20)];
-                        durationLabel.tag = 200;
-                        durationLabel.textColor = [UIColor whiteColor];
-                        durationLabel.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.7];
-                        durationLabel.font = [UIFont systemFontOfSize:12];
-                        durationLabel.textAlignment = NSTextAlignmentCenter;
-                        durationLabel.layer.cornerRadius = 4;
-                        durationLabel.layer.masksToBounds = YES;
-                        [cell.contentView addSubview:durationLabel];
+            // Check if the cell is still displaying the correct asset
+            if (cell.tag == indexPath.item) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    UIImageView *imageView = [[UIImageView alloc] initWithImage:result];
+                    imageView.contentMode = UIViewContentModeScaleAspectFill;
+                    imageView.clipsToBounds = YES;
+                    cell.backgroundView = imageView;
+                    
+                    // Add video duration indicator if it's a video
+                    if (self.mediaType == 1 && asset.duration > 0) {
+                        UILabel *durationLabel = [cell.contentView viewWithTag:200];
+                        if (!durationLabel) {
+                            durationLabel = [[UILabel alloc] initWithFrame:CGRectMake(5, 5, 50, 20)];
+                            durationLabel.tag = 200;
+                            durationLabel.textColor = [UIColor whiteColor];
+                            durationLabel.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.7];
+                            durationLabel.font = [UIFont systemFontOfSize:12];
+                            durationLabel.textAlignment = NSTextAlignmentCenter;
+                            durationLabel.layer.cornerRadius = 4;
+                            durationLabel.layer.masksToBounds = YES;
+                            [cell.contentView addSubview:durationLabel];
+                        }
+                        durationLabel.text = [self formatDuration:asset.duration];
                     }
-                    durationLabel.text = [self formatDuration:asset.duration];
-                }
-                
-                // Remove existing badge if any
-                UILabel *existingBadge = [cell.contentView viewWithTag:100];
-                if (existingBadge) {
-                    [existingBadge removeFromSuperview];
-                }
+                    
+                    // Remove existing badge if any
+                    UILabel *existingBadge = [cell.contentView viewWithTag:100];
+                    if (existingBadge) {
+                        [existingBadge removeFromSuperview];
+                    }
 
-                // Add badge if the asset is selected
-                if ([self.selectedAssets containsObject:asset]) {
-                    UILabel *badgeLabel = [[UILabel alloc] initWithFrame:CGRectMake(cell.bounds.size.width - 40, cell.bounds.size.height - 40, 30, 30)]; // Bottom-right position
-                    badgeLabel.tag = 100; // Set a tag to identify the badge later
-                    badgeLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)[self.selectedAssets indexOfObject:asset] + 1]; // Display the index + 1
-                    badgeLabel.textAlignment = NSTextAlignmentCenter;
-                    badgeLabel.backgroundColor = [UIColor colorWithRed:179/255.0 green:0/255.0 blue:27/255.0 alpha:1.0]; // Changed to #B3001B
-                    badgeLabel.textColor = [UIColor whiteColor];
-                    badgeLabel.layer.cornerRadius = 15; // Half of the width/height for a circle
-                    badgeLabel.layer.masksToBounds = YES;
-                    badgeLabel.font = [UIFont boldSystemFontOfSize:14];
-            
-                    [cell.contentView addSubview:badgeLabel]; // Add badge to cell
-            }
-        });
+                    // Add badge if the asset is selected
+                    if ([self.selectedAssets containsObject:asset]) {
+                        UILabel *badgeLabel = [[UILabel alloc] initWithFrame:CGRectMake(cell.bounds.size.width - 40, cell.bounds.size.height - 40, 30, 30)]; // Bottom-right position
+                        badgeLabel.tag = 100; // Set a tag to identify the badge later
+                        badgeLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)[self.selectedAssets indexOfObject:asset] + 1]; // Display the index + 1
+                        badgeLabel.textAlignment = NSTextAlignmentCenter;
+                        badgeLabel.backgroundColor = [UIColor colorWithRed:179/255.0 green:0/255.0 blue:27/255.0 alpha:1.0]; // Changed to #B3001B
+                        badgeLabel.textColor = [UIColor whiteColor];
+                        badgeLabel.layer.cornerRadius = 15; // Half of the width/height for a circle
+                        badgeLabel.layer.masksToBounds = YES;
+                        badgeLabel.font = [UIFont boldSystemFontOfSize:14];
+                
+                        [cell.contentView addSubview:badgeLabel]; // Add badge to cell
+                }
+            });
+        }
     }];
     
     return cell;
