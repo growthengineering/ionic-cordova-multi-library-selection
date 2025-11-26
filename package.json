@@ -1,7 +1,7 @@
 {
   "name": "IonicCordovaMultiImageSelection",
-  "version": "0.0.1",
-  "description": "Ionic Cordova Plugin (Library)",
+  "version": "0.1.0",
+  "description": "Ionic Cordova Plugin (Library) - Google Play compliant with Android Photo Picker support",
   "cordova": {
     "id": "cordova.plugin.multilibraryselection",
     "platforms": [

@@ -2,7 +2,7 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="cordova-plugin-multilibraryselection"
-    version="0.0.1">
+    version="0.1.0">
     <name>IonicCordovaMultiImageSelection</name>
      
     <js-module  name="multilibraryselection" src="www/IonicCordovaMultiImageSelection.js">
@@ -12,9 +12,7 @@
     <!-- android -->
     <platform name="android">
         <config-file target="AndroidManifest.xml" parent="/*">
-            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-            <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-            <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
         </config-file>
         <config-file target="AndroidManifest.xml" parent="application">
           <activity android:name="cordova.plugin.multilibraryselection.CustomImagePickerActivity" android:theme="@style/Theme.AppCompat.NoActionBar"/>
