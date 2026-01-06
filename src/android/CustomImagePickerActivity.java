@@ -183,7 +183,7 @@ public class CustomImagePickerActivity extends Activity {
   private void onDoneButtonClicked() {
     ArrayList<Uri> convertedUris = new ArrayList<>();
     for (Uri uri : selectedImageUris) {
-        Uri convertedUri = convertHeicToJpeg(uri);
+        Uri convertedUri = processAndResizeImage(uri);
         convertedUris.add(convertedUri);
     }
     
@@ -216,49 +216,73 @@ public class CustomImagePickerActivity extends Activity {
 
 
 
-  private Uri convertHeicToJpeg(Uri imageUri) {
-    String mimeType = getContentResolver().getType(imageUri);
-    if (mimeType != null && (mimeType.equals("image/heic") || mimeType.equals("image/heif"))) {
-        try {
-            // Get the original orientation
-            ExifInterface exif = new ExifInterface(getContentResolver().openInputStream(imageUri));
-            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-
-            // Convert HEIC to Bitmap
-            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-            
-            // Rotate bitmap if needed
-            Matrix matrix = new Matrix();
-            switch (orientation) {
-                case ExifInterface.ORIENTATION_ROTATE_90:
-                    matrix.postRotate(90);
-                    break;
-                case ExifInterface.ORIENTATION_ROTATE_180:
-                    matrix.postRotate(180);
-                    break;
-                case ExifInterface.ORIENTATION_ROTATE_270:
-                    matrix.postRotate(270);
-                    break;
-            }
-            
-            if (orientation != ExifInterface.ORIENTATION_NORMAL) {
-                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-            }
-
-            // Save to file
-            File outputDir = getCacheDir();
-            File outputFile = File.createTempFile("converted_", ".jpg", outputDir);
-            
-            FileOutputStream out = new FileOutputStream(outputFile);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
-            out.close();
-            
-            return Uri.fromFile(outputFile);
-        } catch (Exception e) {
-            Log.e("CustomImagePickerActivity", "Error converting HEIC to JPEG", e);
-        }
+  private Bitmap resizeBitmapIfNeeded(Bitmap bitmap) {
+    int maxDimension = 4480;
+    int width = bitmap.getWidth();
+    int height = bitmap.getHeight();
+    
+    // Only resize if image exceeds max dimension
+    if (width <= maxDimension && height <= maxDimension) {
+        return bitmap;
     }
-    return imageUri;
+    
+    float scaleFactor;
+    if (width > height) {
+        scaleFactor = (float) maxDimension / width;
+    } else {
+        scaleFactor = (float) maxDimension / height;
+    }
+    
+    int newWidth = Math.round(width * scaleFactor);
+    int newHeight = Math.round(height * scaleFactor);
+    
+    return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
+  }
+
+  private Uri processAndResizeImage(Uri imageUri) {
+    try {
+        // Get the original orientation
+        ExifInterface exif = new ExifInterface(getContentResolver().openInputStream(imageUri));
+        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+
+        // Load the bitmap
+        Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+        
+        // Rotate bitmap if needed
+        Matrix matrix = new Matrix();
+        switch (orientation) {
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                matrix.postRotate(90);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                matrix.postRotate(180);
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                matrix.postRotate(270);
+                break;
+        }
+        
+        if (orientation != ExifInterface.ORIENTATION_NORMAL) {
+            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        }
+
+        // Resize if needed
+        bitmap = resizeBitmapIfNeeded(bitmap);
+
+        // Save to file
+        File outputDir = getCacheDir();
+        File outputFile = File.createTempFile("processed_", ".jpg", outputDir);
+        
+        FileOutputStream out = new FileOutputStream(outputFile);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+        out.close();
+        bitmap.recycle();
+        
+        return Uri.fromFile(outputFile);
+    } catch (Exception e) {
+        Log.e("CustomImagePickerActivity", "Error processing image", e);
+        return imageUri;
+    }
   }
 
 
