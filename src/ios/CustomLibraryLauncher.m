@@ -50,15 +50,46 @@
 
 #pragma mark - CustomImagePickerDelegate
 
+- (UIImage *)resizeImageIfNeeded:(UIImage *)image {
+    CGFloat maxDimension = 4480.0;
+    CGFloat width = image.size.width;
+    CGFloat height = image.size.height;
+    
+    // Only resize if image exceeds max dimension
+    if (width <= maxDimension && height <= maxDimension) {
+        return image;
+    }
+    
+    CGFloat scaleFactor;
+    if (width > height) {
+        scaleFactor = maxDimension / width;
+    } else {
+        scaleFactor = maxDimension / height;
+    }
+    
+    CGSize newSize = CGSizeMake(width * scaleFactor, height * scaleFactor);
+    
+    UIGraphicsBeginImageContextWithOptions(newSize, NO, 1.0);
+    [image drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
+    UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return resizedImage;
+}
+
 - (void)didSelectImages:(NSArray<UIImage *> *)images {
     NSMutableArray *results = [NSMutableArray array];
     
     for (NSInteger i = 0; i < images.count; i++) {
         UIImage *image = images[i];
+        
+        // Resize image if needed
+        UIImage *resizedImage = [self resizeImageIfNeeded:image];
+        
         NSString *tempFileName = [NSString stringWithFormat:@"temp_image_%ld_%d.jpg", (long)i, (int)([[NSDate date] timeIntervalSince1970] * 1000)];
         NSString *tempFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:tempFileName];
         
-        NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
+        NSData *imageData = UIImageJPEGRepresentation(resizedImage, 0.90);
         [imageData writeToFile:tempFilePath atomically:YES];
         
         [results addObject:tempFilePath];
